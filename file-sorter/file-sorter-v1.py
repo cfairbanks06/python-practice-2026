@@ -24,6 +24,12 @@ for i in extensions:
             destination_file = path / item.name # Since we've imported Path, '/' combines "path" (~/Downloads/{folder_name}) with the file name to make a new absolute path of ~/Downloads/{folder_name}/{file_name}
 
             print(item.name) # '.name' strips the rest of a path from an item. So if I have /Downloads/test.txt then '.name' would give me 'test.txt'
+            counter = 1
+            while destination_file.exists():
+                destination_file = destination_file.with_stem(item.stem + " " + "(" + str(counter) + ")")
+                counter += 1
+
+
 
             try:
                 shutil.move(str(item), str(destination_file)) # Takes the file specified and moves it to the new file specified
