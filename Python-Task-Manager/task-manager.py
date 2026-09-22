@@ -1,0 +1,283 @@
+#---------------------------------------
+#Python Task Manager
+#---------------------------------------
+
+#List of required operations:
+# 1. Viewing all tasks
+# 2. Viewing tasks with a particular status
+# 3. Adding a task
+# 4. Editing an existing task
+# 5. Changing the status of a task
+# 6. Removing a task
+# 7. Data summary of all tasks (AKA stats)
+# 8. Exit
+
+#Other requirements:
+# - Needs persistence (JSON file)
+# - Should handle invalid user input 
+# - Should have a way to handle the first run of the program
+# - Should handle "ugly" JSON
+# - Should handle duplicate task names
+# - Each task needs the following:
+#   - name
+#   - description
+#   - priority
+#   - completion status
+
+
+#---------------------------------------
+#Imports
+#---------------------------------------
+
+from pathlib import Path
+import os
+import json
+import textwrap
+import sys
+#---------------------------------------
+#Functions
+#---------------------------------------
+
+def block(words): # For making nice-looking headers
+    words = str(words)
+    if len(words) > 40:
+        wrapped_words = textwrap.fill(words, width=40)
+
+        print("-" * 40)
+        print(wrapped_words)
+        print("-" * 40)
+    else:
+        length = len(words)
+        padding_amount = 15
+        padding = length + padding_amount
+        dash_line_length = length + (padding_amount*2)
+        print("-" * dash_line_length)
+        print(words.rjust(padding, " "))
+        print("-" * dash_line_length)
+
+def validMenuInput(thing, a: int, b: int): # Just validates if something is an int and if so if it's within the range set
+    try:
+        thing = int(thing)
+        if thing < a or thing > b:
+            return False
+        else:
+            return True
+    except ValueError:
+        return False
+
+def menuSelect(inputMessage, x: int, y: int): # If it's valid then an integer version of thing is returned. Keeps looping until True
+    # inputMessage is the message to display when prompting input
+    # x is the minimum number for the range of "options" the user can select from (for example 1 if it's 1-8)
+    # y is the maximum number for the range of "options" the user can select from (for example 8 if it's 1-8)
+    while True:
+        thing = input(inputMessage)
+        if validMenuInput(thing, x, y) == True:
+            thing = int(thing)
+            return thing
+        else:
+            print(f"Error: Invalid input. Please enter a number between {x} and {y}")
+            continue
+
+def printMenu(): # Just prints the list of options
+    block("TASK MANAGER")
+    print("1. View tasks")
+    print("2. Add a task")
+    print("3. Edit a task")
+    print("4. Remove a task")
+    print("5. See statistics")
+    print("6. Exit")
+
+def viewTasks(data: dict): # Creates a nice little table for tasks
+    nameLen = 0
+    nameLens = []
+    descLen = 0
+    descLens = []
+    priorLen = 0
+    priorLens = []
+    statLen = 0
+    statLens = []
+#---------------------------------
+    for i in data.keys():
+        nameLens.append(len(i))
+    try:
+        nameLen = max(nameLens)
+        if nameLen > 40:
+            nameLen = 40
+    except ValueError:
+        nameLen = len("Names")
+    if nameLen < len("Names"):
+        nameLen = len("Names")
+#---------------------------------
+    for i in data.keys():
+        descLens.append(len(data[i]["description"]))
+    try:
+        descLen = max(descLens)
+        if descLen > 40:
+            descLen = 40
+    except ValueError:
+        descLen = len("Description")
+    if descLen < len("Description"):
+        descLen = len("Description")
+#---------------------------------
+    for i in data.keys():
+        priorLens.append(len(data[i]["priority"]))
+    try:
+        priorLen = max(priorLens)
+        if priorLen > 40:
+            priorLen = 40
+    except ValueError:
+        priorLen = len("Priority")
+    if priorLen < len("Priority"):
+        priorLen = len("Priority")
+#---------------------------------
+    for i in data.keys():
+        statLens.append(len(data[i]["status"]))
+    try:
+        statLen = max(statLens)
+        if statLen > 40:
+            statLen = 40
+    except ValueError:
+        statLen = len("Status")
+    if statLen < len("Status"):
+        statLen = len("Status")
+#---------------------------------
+    print(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
+    lineLen = len(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
+    print("-"*lineLen)
+    for i in data.keys():
+        print(f"{i:^{nameLen}} | {data[i]['description']:^{descLen}} | {data[i]['priority']:^{priorLen}} | {data[i]['status']:^{statLen}}")
+        print("-"*lineLen)
+
+
+
+#---------------------------------------
+#-------------Main program--------------
+#---------------------------------------
+
+
+
+#----------------------
+#task body rough draft
+#----------------------
+
+
+# tasks = {
+#     "task_name-1":{ <----- Task name would be the name of the dictionary for that task
+#         "description": "Description placed here", <----- description will simply be a string given by the user
+#         "priority": "Low", <----- Priority could either be string-based or integer based (perhaps 1-5 or 1-10?)
+#         "status": "Complete" <----- Status will just be simple not started, in progress, and complete
+#     }
+# }
+
+
+#------------------------------
+#Test Dictionary
+#------------------------------
+
+# tasks = {
+#     "task1":{
+#         "description":"writing 67 a bunch",
+#         "priority":"high",
+#         "status":"not started"
+#     },
+#     "task2":{
+#             "description":"writing 69 a bunch",
+#             "priority":"medium",
+#             "status":"in progress"
+#     },
+#     "task3":{
+#             "description":"writing 21 a bunch",
+#             "priority":"low",
+#             "status":"complete"
+#     }
+# }
+
+
+
+
+
+
+
+
+
+
+#------------------------------------
+#Checking JSON file
+#------------------------------------
+json_file = Path(os.getcwd()) / "Python-Task-Manager" / "task-manager.json" # Since this is just for practice and me, I'm partially hardcoding the path to the json file
+
+
+
+if json_file.exists() == False: # if the json file doesn't exist, we create it and write an empty dictionary to it
+    tasks = {}
+    with open(json_file, "w") as file:
+        json.dump(tasks, file, indent=4)
+    block("Welcome to the Python Task Manager. It seems like this is your first time using this program as there is no saved data.")
+else: # if the json file does exist, we load in the json from the file into our tasks variable (which is our main dictionary)
+    with open(json_file, "r") as file:
+        tasks = json.load(file)
+
+
+#--------
+#Menu
+#--------
+while True:
+    printMenu()
+    choice = menuSelect("Select an operation to perform (1-6): ", 1, 6)
+    if choice == 1: # View tasks --------------------------------------------------------------------------------
+        viewTasks(tasks)
+    elif choice == 2: # Add a task --------------------------------------------------------------------------------
+        nameOTask = str(input("Input the name of the task: "))
+        descOTask = str(input("Input a description of the task: "))
+        while True:
+            priorOTask = str(input("Input the priority of the task (high, medium, low): ").lower().strip())
+            if priorOTask != "high" and priorOTask != "medium" and priorOTask != "low":
+                print("Error: Not a valid priority.")
+            else:
+                break
+        while True:
+            statOTask = str(input("Input the status of the task (not started, in progress, complete): ").lower().strip())
+            if statOTask != "not started" and statOTask != "in progress" and statOTask != "complete":
+                print("Error: Not a valid status. Please check your spelling and try again")
+            else:
+                break
+        tasks[nameOTask] = {"description": descOTask, "priority": priorOTask, "status": statOTask}
+        print(f"Task '{nameOTask}' was added to tasks")
+        #---------------
+        # Saving
+        #---------------
+        with open(json_file, "w") as file:
+            json.dump(tasks, file, indent=4)
+    elif choice == 3: # Edit a task --------------------------------------------------------------------------------
+        print(choice)
+    elif choice == 4: # Remove a task --------------------------------------------------------------------------------
+        if tasks == {}:
+            print("Error: There are no tasks to delete")
+        else:
+            viewTasks(tasks)
+            while True:
+                nameOTask = str(input("What task do you want to delete: ").lower().strip())
+                if nameOTask not in tasks.keys():
+                    print("Error: A task of that name does not exist")
+                else:
+                    break
+            while True:
+                confirm = str(input(f"Are you sure you want to delete '{nameOTask}' from tasks? (y/n): ").lower().strip())
+                if confirm == "y":
+                    del tasks[nameOTask]
+                    print(f"'{nameOTask}' was successfully deleted from tasks")
+                    #---------------
+                    # Saving
+                    #---------------
+                    with open(json_file, "w") as file:
+                        json.dump(tasks, file, indent=4)
+                    break
+                elif confirm == "n":
+                    break
+                else:
+                    print("Error: Please input 'y' or 'n'")
+    elif choice == 5: # See statistics --------------------------------------------------------------------------------
+        print(choice)
+    elif choice == 6: # Exit --------------------------------------------------------------------------------
+        sys.exit()
+
