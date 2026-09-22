@@ -144,8 +144,60 @@ def viewTasks(data: dict): # Creates a nice little table for tasks
     print(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
     lineLen = len(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
     print("-"*lineLen)
-    for i in data.keys():
-        print(f"{i:^{nameLen}} | {data[i]['description']:^{descLen}} | {data[i]['priority']:^{priorLen}} | {data[i]['status']:^{statLen}}")
+    # for i in data.keys():
+    #     print(f"{i:^{nameLen}} | {data[i]['description']:^{descLen}} | {data[i]['priority']:^{priorLen}} | {data[i]['status']:^{statLen}}")
+    #     print("-"*lineLen)
+    for n in tasks.keys():
+    
+        nameWrap = textwrap.wrap(n, nameLen)
+        #nameLen = tableLength
+        descWrap = textwrap.wrap(tasks[n]["description"], descLen)
+        #descLen = tableLength
+        priorWrap = textwrap.wrap(tasks[n]["priority"], priorLen)
+        #priorLen = tableLength
+        statWrap = textwrap.wrap(tasks[n]["status"], statLen)
+        #statLen = tableLength
+
+        lens = []
+        lens.append(len(nameWrap))
+        lens.append(len(descWrap))
+        lens.append(len(priorWrap))
+        lens.append(len(statWrap))
+
+        # print(lens)
+        maxLen = max(lens)
+        # print(maxLen)
+
+        if len(nameWrap) < maxLen:
+            addRows = maxLen - len(nameWrap)
+            for i in range(addRows):
+                nameWrap.append("")
+                # print(nameWrap)
+
+        if len(descWrap) < maxLen:
+            addRows = maxLen - len(descWrap)
+            for i in range(addRows):
+                descWrap.append("")
+                # print(descWrap)
+
+
+        if len(priorWrap) < maxLen:
+            addRows = maxLen - len(priorWrap)
+            for i in range(addRows):
+                priorWrap.append("")
+                # print(priorWrap)
+
+
+        if len(statWrap) < maxLen:
+            addRows = maxLen - len(statWrap)
+            for i in range(addRows):
+                statWrap.append("")
+                # print(statWrap)
+        
+        lineLen = len(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
+        for i in range(maxLen):
+            print(f"{nameWrap[i]:^{nameLen}} | {descWrap[i]:^{descLen}} | {priorWrap[i]:^{priorLen}} | {statWrap[i]:^{statLen}}")
+        
         print("-"*lineLen)
 
 
@@ -227,7 +279,7 @@ while True:
     if choice == 1: # View tasks --------------------------------------------------------------------------------
         viewTasks(tasks)
     elif choice == 2: # Add a task --------------------------------------------------------------------------------
-        nameOTask = str(input("Input the name of the task: "))
+        nameOTask = str(input("Input the name of the task: ")).lower().strip()
         descOTask = str(input("Input a description of the task: "))
         while True:
             priorOTask = str(input("Input the priority of the task (high, medium, low): ").lower().strip())

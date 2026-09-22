@@ -1,8 +1,7 @@
 import textwrap
 
 
-text = "name1"
-wrapLimit = 10
+
 tableLength = 20
 
 
