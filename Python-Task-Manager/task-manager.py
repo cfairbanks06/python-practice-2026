@@ -4,7 +4,7 @@
 
 #List of required operations:
 # 1. Viewing all tasks
-# 2. Viewing tasks with a particular status
+# 2. Viewing tasks with a particular status (or priority)
 # 3. Adding a task
 # 4. Editing an existing task
 # 5. Changing the status of a task
@@ -144,18 +144,16 @@ def viewTasks(data: dict): # Creates a nice little table for tasks
     print(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
     lineLen = len(f"{'Names':^{nameLen}} | {'Description':^{descLen}} | {'Priority':^{priorLen}} | {'Status':^{statLen}}")
     print("-"*lineLen)
-    # for i in data.keys():
-    #     print(f"{i:^{nameLen}} | {data[i]['description']:^{descLen}} | {data[i]['priority']:^{priorLen}} | {data[i]['status']:^{statLen}}")
-    #     print("-"*lineLen)
-    for n in tasks.keys():
+
+    for n in data.keys():
     
         nameWrap = textwrap.wrap(n, nameLen)
         #nameLen = tableLength
-        descWrap = textwrap.wrap(tasks[n]["description"], descLen)
+        descWrap = textwrap.wrap(data[n]["description"], descLen)
         #descLen = tableLength
-        priorWrap = textwrap.wrap(tasks[n]["priority"], priorLen)
+        priorWrap = textwrap.wrap(data[n]["priority"], priorLen)
         #priorLen = tableLength
-        statWrap = textwrap.wrap(tasks[n]["status"], statLen)
+        statWrap = textwrap.wrap(data[n]["status"], statLen)
         #statLen = tableLength
 
         lens = []
@@ -200,7 +198,78 @@ def viewTasks(data: dict): # Creates a nice little table for tasks
         
         print("-"*lineLen)
 
+#------------------------------------------------------------------------------
+#filterTasks Description:
+# # Takes a dictionary, a 'type' (In this case priority or status)
+# and a filter (In this case, any of the values that correspond to the 'type')
+# and then runs through the keys matching those arguments and puts them in a temporary dictionary
+# before printing the temporary dictionary
+def filterTasks(data: dict, type, filter): 
+    tempDict = {}
+    for i in data.keys():
+        if data[i][type] == filter:
+            tempDict[i] = data[i]
+        else:
+            continue
+    if tempDict == {}:
+        print(f"No matches for a task with {type} '{filter}'")
+    else:
+        viewTasks(tempDict)
 
+
+def isKeyInDict(data: dict, thing): # Just checks if a key is present in a dictionary
+    if thing in data:
+        return True
+    else:
+        return False
+
+
+def statistics():
+
+    if tasks == {}:
+        print("There are no tasks")
+    else:
+        #Status counters
+        ns = 0
+        ip = 0
+        c = 0
+        for i in tasks.keys():
+            if tasks[i]["status"] == "not started":
+                ns += 1
+            elif tasks[i]["status"] == "in progress":
+                ip += 1
+            else:
+                c += 1
+        #Priority counters
+        l = 0
+        m = 0
+        h = 0
+        for i in tasks.keys():
+            if tasks[i]["priority"] == "low":
+                l += 1
+            elif tasks[i]["priority"] == "medium":
+                m += 1
+            else:
+                h += 1
+
+
+        #Counters:
+        #Total Tasks
+        block("TOTAL")
+        print(f"Total tasks: {len(tasks)}")
+        #Counts by status/priority
+        block("STATUS")
+        print(f"Tasks not started: {ns}")
+        print(f"Tasks in progress: {ip}")
+        print(f"Tasks complete: {c}")
+        block("PRIORITY")
+        print(f"Number of low priority tasks: {l}")
+        print(f"Number of medium priority tasks: {m}")
+        print(f"Number of high priority tasks: {h}")
+        #completion percentage
+        comp = (c / len(tasks)) * 100
+        block("COMPLETION")
+        print(f"Percentage of tasks completed: {comp}%")
 
 #---------------------------------------
 #-------------Main program--------------
@@ -266,8 +335,67 @@ if json_file.exists() == False: # if the json file doesn't exist, we create it a
         json.dump(tasks, file, indent=4)
     block("Welcome to the Python Task Manager. It seems like this is your first time using this program as there is no saved data.")
 else: # if the json file does exist, we load in the json from the file into our tasks variable (which is our main dictionary)
-    with open(json_file, "r") as file:
-        tasks = json.load(file)
+    try:
+        with open(json_file, "r") as file:
+            tasks = json.load(file)
+    except json.JSONDecodeError: # If "corrupt" then we give the user the option to leave and fix it or wipe the file
+        print("Error: There was an issue loading the data from the JSON file. It may be corrupt.")
+        print("\nPlease close this program and fix it. Otherwise the file will be overwritten to be empty if you continue")
+        while True:
+            choice = input("\nClose this program? (y/n): ").lower().strip()
+            if choice == "y":
+                sys.exit()
+            elif choice == "n":
+                tasks = {}
+                with open(json_file, "w") as file:
+                    json.dump(tasks, file, indent=4)
+                break
+            else:
+                print("Error: Please input 'y' or 'n'")
+
+
+if isinstance(tasks, dict) == False:
+    print("ERROR: tasks is not a dictionary. Please fix your JSON file")
+    sys.exit()
+
+# Proper value detection
+if tasks != {}:
+    for i in tasks.keys():
+        if not isinstance(tasks[i], dict):
+            print(f"ERROR: task '{i}' is not a dictionary. Please fix your JSON file")
+            sys.exit()
+        # if "description" in tasks[i].keys():
+        #     print("description present")
+        if "description" not in tasks[i].keys():
+            print(f"ERROR: task '{i}' is missing a description. Please fix your JSON file")
+            sys.exit()
+        if not isinstance(tasks[i]["description"], str):
+            print(f"ERROR: task '{i}' doesn't have a description with a string value. Please fix your JSON")
+            sys.exit()
+        if "status" not in tasks[i].keys():
+            print(f"ERROR: task '{i}' is missing a status. Please fix your JSON file")
+            sys.exit()
+        if "priority" in tasks[i].keys():
+            if not isinstance(tasks[i]["priority"], str):
+                print(f"ERROR: task '{i}' doesn't have a priority with a string value. Please fix your JSON")
+                sys.exit()
+            if tasks[i]["priority"] != "low" and tasks[i]["priority"] != "medium" and tasks[i]["priority"] != "high":
+                print(f"ERROR: task '{i}' has invalid priority '{tasks[i]["priority"]}'. Please fix your JSON file")
+                sys.exit()
+        if "priority" not in tasks[i].keys():
+            print(f"ERROR: task '{i}' is missing a priority. Please fix your JSON file")
+            sys.exit()
+        if "status" in tasks[i].keys():
+            if not isinstance(tasks[i]["status"], str):
+                print(f"ERROR: task '{i}' doesn't have a status with a string value. Please fix your JSON")
+                sys.exit()
+            if tasks[i]["status"] != "not started" and tasks[i]["status"] != "in progress" and tasks[i]["status"] != "complete":
+                print(f"ERROR: task '{i}' has invalid status '{tasks[i]["status"]}'. Please fix your JSON file")
+                sys.exit()
+        if len(tasks[i].keys()) > 3 and (tasks[i] != "description" and tasks[i] != "status" and tasks[i] != "priority"):
+            print(f"Error: task '{i}' has a foreign key. Please fix your JSON file")
+            sys.exit()
+
 
 
 #--------
@@ -277,9 +405,65 @@ while True:
     printMenu()
     choice = menuSelect("Select an operation to perform (1-6): ", 1, 6)
     if choice == 1: # View tasks --------------------------------------------------------------------------------
-        viewTasks(tasks)
+        if tasks == {}:
+            block("There are no tasks to display.")
+        else:
+            while True:
+                print("1. View all tasks")
+                print("2. Filter by priority")
+                print("3. Filter by status")
+                print("4. Return to main menu")
+                subChoice = input("How would you like to view your tasks: ")
+                if validMenuInput(subChoice, 1, 4) == True:
+                    subChoice = int(subChoice)
+                    if subChoice == 1:
+                        viewTasks(tasks)
+                    elif subChoice == 2:
+                        while True:
+                            print("1. low")
+                            print("2. medium")
+                            print("3. high")
+                            print("4. Return to view menu")
+                            subChoice = input("What priority do you want to filter by: ")
+                            if validMenuInput(subChoice, 1, 4) == True:
+                                subChoice = int(subChoice)
+                                if subChoice == 1:
+                                    filterTasks(tasks, "priority", "low")
+                                elif subChoice == 2:
+                                    filterTasks(tasks, "priority", "medium")
+                                elif subChoice == 3:
+                                    filterTasks(tasks, "priority", "high")
+                                elif subChoice == 4:
+                                    break
+                    elif subChoice == 3:
+                        while True:
+                            print("1. not started")
+                            print("2. in progress")
+                            print("3. complete")
+                            print("4. Return to view menu")
+                            subChoice = input("What status do you want to filter by: ")
+                            if validMenuInput(subChoice, 1, 4) == True:
+                                subChoice = int(subChoice)
+                                if subChoice == 1:
+                                    filterTasks(tasks, "status", "not started")
+                                elif subChoice == 2:
+                                    filterTasks(tasks, "status", "in progress")
+                                elif subChoice == 3:
+                                    filterTasks(tasks, "status", "complete")
+                                elif subChoice == 4:
+                                    break
+                    elif subChoice == 4:
+                        break
+                else:
+                    print("Error: Invalid input. Please enter a number corresponding to your menu choice")
+                continue
     elif choice == 2: # Add a task --------------------------------------------------------------------------------
-        nameOTask = str(input("Input the name of the task: ")).lower().strip()
+        while True:
+            nameOTask = str(input("Input the name of the task: ")).lower().strip()
+            if isKeyInDict(tasks, nameOTask) == True:
+                print(f"Error: A task named '{nameOTask}' already exists. Please choose a different name")
+            else:
+                break
         descOTask = str(input("Input a description of the task: "))
         while True:
             priorOTask = str(input("Input the priority of the task (high, medium, low): ").lower().strip())
@@ -301,7 +485,109 @@ while True:
         with open(json_file, "w") as file:
             json.dump(tasks, file, indent=4)
     elif choice == 3: # Edit a task --------------------------------------------------------------------------------
-        print(choice)
+        if tasks == {}:
+            block("There are no tasks to edit.")
+        else:
+            while True:
+                print("1. Edit the name of a task")
+                print("2. Edit the description of a task")
+                print("3. Edit the status of a task")
+                print("4. Edit the priority of a task")
+                print("5. Exit to main menu")
+                subChoice = input("What would you like to edit: ")
+                if validMenuInput(subChoice, 1, 5) == True:
+                    subChoice = int(subChoice)
+                    if subChoice == 1:
+                        viewTasks(tasks)
+                        while True:
+                            taskToEdit = input("Input the current name of the task: ").lower().strip()
+                            if isKeyInDict(tasks, taskToEdit) == True:
+                                while True:
+                                    newName = input(f"Enter the new name of '{taskToEdit}': ").lower().strip()
+                                    if newName == taskToEdit:
+                                        print("Error: Please input a new name for the task, not the existing name")
+                                    elif isKeyInDict(tasks, newName) == True:
+                                        print("Error: A task with that name already exists. Please enter a completely new name")
+                                    else:
+                                        tasks[newName] = tasks.pop(taskToEdit)
+                                        print(f"Name of '{taskToEdit}' was changed to '{newName}' successfully")
+                                        #---------------
+                                        # Saving
+                                        #---------------
+                                        with open(json_file, "w") as file:
+                                            json.dump(tasks, file, indent=4)
+                                        break
+                            else:
+                                print("Error: A task of that name does not exist")
+                    elif subChoice == 2:
+                        viewTasks(tasks)
+                        while True:
+                            taskToEdit = input("Input the name of the task you'd like to edit: ").lower().strip()
+                            if isKeyInDict(tasks, taskToEdit) == True:
+                                while True:
+                                    newDesc = input(f"Enter the new description for '{taskToEdit}': ")
+                                    if newDesc == "":
+                                        print("Error: Description must contain text, cannot be empty")
+                                        continue
+                                    elif newDesc == tasks[taskToEdit]["description"]:
+                                        print("Error: Please enter a new description")
+                                    else:
+                                        tasks[taskToEdit]["description"] = newDesc
+                                        #---------------
+                                        # Saving
+                                        #---------------
+                                        with open(json_file, "w") as file:
+                                            json.dump(tasks, file, indent=4)
+                                        break
+                            else:
+                                print("Error: A task of that name does not exist")
+                    elif subChoice == 3:
+                        viewTasks(tasks)
+                        while True:
+                            taskToEdit = input("Input the name of the task you'd like to edit: ").lower().strip()
+                            if isKeyInDict(tasks, taskToEdit) == True:
+                                while True:
+                                    newStat = input(f"Enter the new status for '{taskToEdit}': ").lower().strip()
+                                    if newStat != "not started" and newStat != "in progress" and newStat != "complete":
+                                        print("Error: Please input 'not started', 'in progress', or 'complete'")
+                                    elif newStat == tasks[taskToEdit]["status"]:
+                                        print("Error: Please enter a new status")
+                                    else:
+                                        tasks[taskToEdit]["status"] = newStat
+                                        #---------------
+                                        # Saving
+                                        #---------------
+                                        with open(json_file, "w") as file:
+                                            json.dump(tasks, file, indent=4)
+                                        break
+                            else:
+                                print("Error: A task of that name does not exist")
+                    elif subChoice == 4:
+                        viewTasks(tasks)
+                        while True:
+                            taskToEdit = input("Input the name of the task you'd like to edit: ").lower().strip()
+                            if isKeyInDict(tasks, taskToEdit) == True:
+                                while True:
+                                    newPrior = input(f"Enter the new priority for '{taskToEdit}': ").lower().strip()
+                                    if newPrior != "low" and newPrior != "medium" and newPrior != "high":
+                                        print("Error: Please input 'low', 'medium', or 'high'")
+                                    elif newPrior == tasks[taskToEdit]["priority"]:
+                                        print("Error: Please enter a new priority")
+                                    else:
+                                        tasks[taskToEdit]["priority"] = newPrior
+                                        #---------------
+                                        # Saving
+                                        #---------------
+                                        with open(json_file, "w") as file:
+                                            json.dump(tasks, file, indent=4)
+                                        break
+                            else:
+                                print("Error: A task of that name does not exist")
+                    elif subChoice == 5:
+                        break
+                else:
+                    print("Error: Invalid input. Please enter a number corresponding to your menu choice")
+                continue
     elif choice == 4: # Remove a task --------------------------------------------------------------------------------
         if tasks == {}:
             print("Error: There are no tasks to delete")
@@ -309,7 +595,7 @@ while True:
             viewTasks(tasks)
             while True:
                 nameOTask = str(input("What task do you want to delete: ").lower().strip())
-                if nameOTask not in tasks.keys():
+                if isKeyInDict(tasks, nameOTask) == False:
                     print("Error: A task of that name does not exist")
                 else:
                     break
@@ -329,7 +615,7 @@ while True:
                 else:
                     print("Error: Please input 'y' or 'n'")
     elif choice == 5: # See statistics --------------------------------------------------------------------------------
-        print(choice)
+        statistics()
     elif choice == 6: # Exit --------------------------------------------------------------------------------
         sys.exit()
 
