@@ -1,0 +1,14 @@
+2026-10-05 15:17:07 | __main__ | INFO | Program started
+2026-10-05 15:17:07 | __main__ | DEBUG | Doing some extremely important goobering
+2026-10-05 15:17:07 | __main__ | WARNING | Goobering levels dangerously high
+2026-10-05 15:17:48 | __main__ | INFO | Program started
+2026-10-05 15:17:48 | __main__ | DEBUG | Doing some extremely important goobering
+2026-10-05 15:17:48 | __main__ | WARNING | Goobering levels dangerously high
+2026-10-05 15:20:56 | __main__ | INFO | Program started
+2026-10-05 15:20:56 | __main__ | DEBUG | Doing some extremely important goobering
+2026-10-05 15:20:56 | __main__ | WARNING | Goobering levels dangerously high
+2026-10-05 15:20:56 | __main__ | ERROR | Failed to convert value
+Traceback (most recent call last):
+  File "/Users/cortezfairbanks/python-practice-2026/logging-test/logging-test.py", line 36, in <module>
+    number = int("goober")
+ValueError: invalid literal for int() with base 10: 'goober'
